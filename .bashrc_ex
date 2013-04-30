@@ -1,0 +1,263 @@
+export PATH=/usr/lib/qt-3.3/bin:/usr/kerberos/bin:/usr/lib/ccache:/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/sbin:/corp/tools/centaur/bin
+#PS1="[\u@\h \W]\$ "
+PS1="\[\e[36;1m\][\[\e[31;1m\]\u@\h \[\e[36;1m\]\W]\[\e[31;1m\]$ \[\e[0m\]"
+
+alias ls='ls --color=auto'
+alias ll='ls -lahrt --color=auto'
+alias edir='cd /localdata/cdeloach/sandbox/oneos/branches/diags/dev/hdpsm-new-kernel/'
+alias ewdir='cd /localdata/cdeloach/sandbox/oneos/branches/diags/dev/hdpsm-new-kernel/src/software/diags-centaur/apps/diags'
+alias mdir='cd /localdata/cdeloach/sandbox/oneos/branches/centaur/dev/main/src/software/centaur/apps/'
+alias bdir='cd /localdata/cdeloach/sandbox/oneos/branches/diags/dev/main/'
+alias wdir='cd /localdata/cdeloach/sandbox/oneos/branches/diags/dev/main/src/software/diags-centaur/apps/diags'
+alias ddir='cd /localdata/cdeloach/sandbox-dev/oneos/branches/diags/dev/main/'
+alias dwdir='cd /localdata/cdeloach/sandbox-dev/oneos/branches/diags/dev/main/src/software/diags-centaur/apps/diags'
+alias adir='cd /localdata/cdeloach/sandbox/Centaur/test/amxfp/AmXfp/'
+alias fs='cd /localdata/cdeloach/sandbox/oneos/branches/diags/dev/main/src/software/diags-centaur/fs'
+alias efs='cd /localdata/cdeloach/sandbox/oneos/branches/diags/dev/hdpsm-new-kernel/src/software/diags-centaur/fs'
+alias tf='cd /var/lib/tftpboot'
+alias fpga='cd /home/cdeloach/sandbox/CienaEngineering/fpga/centaur/slm_port_fpga'
+alias lmta1='telnet 192.168.2.168 6020'
+alias lmta2='telnet 192.168.2.168 6021'
+alias lmta3='telnet 192.168.2.168 6022'
+alias lmta4='telnet 192.168.2.168 6023'
+
+#export PATH=$PATH:/sbin:/corp/tools/centaur/bin
+export GREP_OPTIONS=--color=auto
+export TARG=diags-cn5430
+export EDITOR=/usr/bin/vim
+export VISUAL=/usr/bin/vim
+export P4CONFIG=/home/cdeloach/.p4config
+export CCACHE_DIR=/localdata/.ccache
+export LD_LIBRARY_PATH=/usr/local/qwt-5.2.0/lib
+export HISTCONTROL='ignoredups:erasedups'
+export ALTERA_TOOLS=/corp/tools/fpga/altera/quartus12.0_sp2
+#export PATH=$PATH:$ALTERA_TOOLS/nios2eds/sdk2/bin:$ALTERA_TOOLS/nios2eds/bin/gnu/H-i686-pc-linux-gnu/bin:$ALTERA_TOOLS/nios2eds/bin:$ALTERA_TOOLS/quartus/bin:$ALTERA_TOOLS/quartus/sopc_builder/bin
+alias altera='cd $ALTERA_TOOLS/nios2eds ; ./nios2_command_shell.sh'
+
+export P4PORT=gaxp4proxy1.ciena.com:2003
+export P4CONFIG=.p4config.txt
+export P4EDITOR=vim
+export P4USER=cdeloach
+export P4MERGE="p4merge"
+export P4DIFF="vimdiff"
+
+function bdiag {
+    PATH_TO_BRANCH=/localdata/cdeloach/sandbox/oneos/branches/diags/dev
+    BRANCH_NAME=main
+    BUILD_TARG=diags-cn5430
+    TFTP_FILENAME=$1.bin
+    PATH_TO_TFTP=/var/lib/tftpboot
+    PATH_TO_FTP=/var/ftp/diags
+    PATH_TO_NFS=/flexnfsroot
+    TSLM2=kernel-diagramfs-tslm2-powerpc-e500-ciena_cn5430_e500_32b.img
+    TSLM3=kernel-diagramfs-tslm3-powerpc-e500-ciena_cn5430_e500_32b.img
+    TSLM12=kernel-diagramfs-tslm12-powerpc-e500-ciena_cn5430_e500_32b.img
+    TSLM12D=kernel-diagramfs-tslm12-dwdm-powerpc-e500-ciena_cn5430_e500_32b.img
+    TSLM48=kernel-diagramfs-tslm48-powerpc-e500-ciena_cn5430_e500_32b.img
+    HSLM1=kernel-diagramfs-hslm1-powerpc-e500-ciena_cn5430_e500_32b.img
+    CTM30=kernel-diagramfs-ctm30-powerpc-e500-ciena_cn5430_e500_32b.img
+    LOCAL_FILENAME=kernel-diagramfs-$1-powerpc-e500-ciena_cn5430_e500_32b.img
+
+    declare -l POSTFIX
+    POSTFIX=$2
+    POSTFIX=${POSTFIX//[=]/}
+
+    if [ $1 == "all" ]; then
+        echo "Building from Branch $BRANCH_NAME : All Diags"
+        touch $PATH_TO_BRANCH/$BRANCH_NAME/src/software/diags-centaur/apps/diags/common/Version.cpp
+        time $PATH_TO_BRANCH/$BRANCH_NAME/go TARG=$BUILD_TARG -j8 kernel.img_diagramfs $2
+        if (( $? == 0 )); then
+            echo "All Diags Build Succeeded!"
+            echo "Moving file to tftpboot"
+            #if [ $# == 1 ]; then
+                cp $PATH_TO_BRANCH/$BRANCH_NAME/build/$BUILD_TARG/kernel.img/$TSLM2 $PATH_TO_TFTP/tslm2.bin
+                cp $PATH_TO_BRANCH/$BRANCH_NAME/build/$BUILD_TARG/kernel.img/$TSLM3 $PATH_TO_TFTP/tslm3.bin
+                cp $PATH_TO_BRANCH/$BRANCH_NAME/build/$BUILD_TARG/kernel.img/$TSLM12 $PATH_TO_TFTP/tslm12.bin
+                cp $PATH_TO_BRANCH/$BRANCH_NAME/build/$BUILD_TARG/kernel.img/$TSLM12D $PATH_TO_TFTP/tslm12d.bin
+                cp $PATH_TO_BRANCH/$BRANCH_NAME/build/$BUILD_TARG/kernel.img/$TSLM48 $PATH_TO_TFTP/tslm48.bin
+                cp $PATH_TO_BRANCH/$BRANCH_NAME/build/$BUILD_TARG/kernel.img/$HSLM1 $PATH_TO_TFTP/hslm1.bin
+                cp $PATH_TO_BRANCH/$BRANCH_NAME/build/$BUILD_TARG/kernel.img/$CTM30 $PATH_TO_TFTP/ctm30.bin
+                echo "Moving file to ftp"
+                cp $PATH_TO_BRANCH/$BRANCH_NAME/build/$BUILD_TARG/kernel.img/$TSLM2 $PATH_TO_FTP/tslm2.bin
+                cp $PATH_TO_BRANCH/$BRANCH_NAME/build/$BUILD_TARG/kernel.img/$TSLM3 $PATH_TO_FTP/tslm3.bin
+                cp $PATH_TO_BRANCH/$BRANCH_NAME/build/$BUILD_TARG/kernel.img/$TSLM12 $PATH_TO_FTP/tslm12.bin
+                cp $PATH_TO_BRANCH/$BRANCH_NAME/build/$BUILD_TARG/kernel.img/$TSLM12D $PATH_TO_FTP/tslm12d.bin
+                cp $PATH_TO_BRANCH/$BRANCH_NAME/build/$BUILD_TARG/kernel.img/$TSLM48 $PATH_TO_FTP/tslm48.bin
+                cp $PATH_TO_BRANCH/$BRANCH_NAME/build/$BUILD_TARG/kernel.img/$HSLM1 $PATH_TO_FTP/hslm1.bin
+                cp $PATH_TO_BRANCH/$BRANCH_NAME/build/$BUILD_TARG/kernel.img/$CTM30 $PATH_TO_FTP/ctm30.bin
+            #else
+            #    cp $PATH_TO_BRANCH/$BRANCH_NAME/build/$BUILD_TARG/kernel.img/$TSLM3 $PATH_TO_TFTP/tslm3_$POSTFIX.bin
+            #    cp $PATH_TO_BRANCH/$BRANCH_NAME/build/$BUILD_TARG/kernel.img/$TSLM12 $PATH_TO_TFTP/tslm12_$POSTFIX.bin
+            #    cp $PATH_TO_BRANCH/$BRANCH_NAME/build/$BUILD_TARG/kernel.img/$TSLM48 $PATH_TO_TFTP/tslm48_$POSTFIX.bin
+            #    cp $PATH_TO_BRANCH/$BRANCH_NAME/build/$BUILD_TARG/kernel.img/$CTM30 $PATH_TO_TFTP/ctm30_$POSTFIX.bin
+            #    echo "Moving file to ftp"
+            #    cp $PATH_TO_BRANCH/$BRANCH_NAME/build/$BUILD_TARG/kernel.img/$TSLM3 $PATH_TO_FTP/tslm3_$POSTFIX.bin
+            #    cp $PATH_TO_BRANCH/$BRANCH_NAME/build/$BUILD_TARG/kernel.img/$TSLM12 $PATH_TO_FTP/tslm12_$POSTFIX.bin
+            #    cp $PATH_TO_BRANCH/$BRANCH_NAME/build/$BUILD_TARG/kernel.img/$TSLM48 $PATH_TO_FTP/tslm48_$POSTFIX.bin
+            #    cp $PATH_TO_BRANCH/$BRANCH_NAME/build/$BUILD_TARG/kernel.img/$CTM30 $PATH_TO_FTP/ctm30_$POSTFIX.bin
+            #fi
+        else
+            echo "All Diags Build Failed!"
+        fi
+    else
+        echo "Building from Branch $BRANCH_NAME : $1 Diags"
+        touch $PATH_TO_BRANCH/$BRANCH_NAME/src/software/diags-centaur/apps/diags/common/Version.cpp
+        time $PATH_TO_BRANCH/$BRANCH_NAME/go TARG=$BUILD_TARG -j8 kernel.img_diagramfs_$1 $2
+        if (( $? == 0 )); then
+            echo "$2 Diag Build Succeeded!"
+            echo "Moving file to tftpboot"
+            cp $PATH_TO_BRANCH/$BRANCH_NAME/build/$BUILD_TARG/kernel.img/$LOCAL_FILENAME $PATH_TO_TFTP/$TFTP_FILENAME
+            echo "Moving file to ftp"
+            cp $PATH_TO_BRANCH/$BRANCH_NAME/build/$BUILD_TARG/kernel.img/$LOCAL_FILENAME $PATH_TO_FTP/$TFTP_FILENAME
+            echo "Moving file to flexnfsroot"
+            if [ $1 == "ctm30" ]; then
+                cp $PATH_TO_BRANCH/$BRANCH_NAME/build/$BUILD_TARG/ctm_diags/$1/powerpc-e500/32/ctm_diags $PATH_TO_NFS/$1_diags
+            else
+                if [ $1 == "hslm1" ]; then
+                    cp $PATH_TO_BRANCH/$BRANCH_NAME/build/$BUILD_TARG/hslm_diags/$1/powerpc-e500/32/hslm_diags $PATH_TO_NFS/$1_diags
+                else
+                    cp $PATH_TO_BRANCH/$BRANCH_NAME/build/$BUILD_TARG/tslm_diags/$1/powerpc-e500/32/tslm_diags $PATH_TO_NFS/$1_diags
+                fi
+            fi
+        else
+            echo "$1 Diag Build Failed!"
+        fi
+    fi
+}
+
+function cpall {
+    PATH_TO_BRANCH=/localdata/cdeloach/sandbox/oneos/branches/diags/dev
+    BRANCH_NAME=main
+    BUILD_TARG=diags-cn5430
+    PATH_TO_TFTP=/var/lib/tftpboot
+    PATH_TO_FTP=/var/ftp/diags
+    HSLM1=kernel-diagramfs-hslm1-powerpc-e500-ciena_cn5430_e500_32b.img
+    TSLM3=kernel-diagramfs-tslm3-powerpc-e500-ciena_cn5430_e500_32b.img
+    TSLM2=kernel-diagramfs-tslm2-powerpc-e500-ciena_cn5430_e500_32b.img
+    TSLM12=kernel-diagramfs-tslm12-powerpc-e500-ciena_cn5430_e500_32b.img
+    TSLM48=kernel-diagramfs-tslm48-powerpc-e500-ciena_cn5430_e500_32b.img
+    CTM30=kernel-diagramfs-ctm30-powerpc-e500-ciena_cn5430_e500_32b.img
+
+    echo "Moving files to tftpboot"
+    cp $PATH_TO_BRANCH/$BRANCH_NAME/build/$BUILD_TARG/kernel.img/$HSLM1 $PATH_TO_TFTP/hslm1.bin
+    cp $PATH_TO_BRANCH/$BRANCH_NAME/build/$BUILD_TARG/kernel.img/$TSLM2 $PATH_TO_TFTP/tslm2.bin
+    cp $PATH_TO_BRANCH/$BRANCH_NAME/build/$BUILD_TARG/kernel.img/$TSLM3 $PATH_TO_TFTP/tslm3.bin
+    cp $PATH_TO_BRANCH/$BRANCH_NAME/build/$BUILD_TARG/kernel.img/$TSLM12 $PATH_TO_TFTP/tslm12.bin
+    cp $PATH_TO_BRANCH/$BRANCH_NAME/build/$BUILD_TARG/kernel.img/$TSLM48 $PATH_TO_TFTP/tslm48.bin
+    cp $PATH_TO_BRANCH/$BRANCH_NAME/build/$BUILD_TARG/kernel.img/$CTM30 $PATH_TO_TFTP/ctm30.bin
+    echo "Moving files to ftp"
+    cp $PATH_TO_BRANCH/$BRANCH_NAME/build/$BUILD_TARG/kernel.img/$HSLM1 $PATH_TO_FTP/hslm1.bin
+    cp $PATH_TO_BRANCH/$BRANCH_NAME/build/$BUILD_TARG/kernel.img/$TSLM2 $PATH_TO_FTP/tslm2.bin
+    cp $PATH_TO_BRANCH/$BRANCH_NAME/build/$BUILD_TARG/kernel.img/$TSLM3 $PATH_TO_FTP/tslm3.bin
+    cp $PATH_TO_BRANCH/$BRANCH_NAME/build/$BUILD_TARG/kernel.img/$TSLM12 $PATH_TO_FTP/tslm12.bin
+    cp $PATH_TO_BRANCH/$BRANCH_NAME/build/$BUILD_TARG/kernel.img/$TSLM48 $PATH_TO_FTP/tslm48.bin
+    cp $PATH_TO_BRANCH/$BRANCH_NAME/build/$BUILD_TARG/kernel.img/$CTM30 $PATH_TO_FTP/ctm30.bin
+}
+
+function ediag {
+    PATH_TO_BRANCH=/localdata/cdeloach/sandbox/oneos/branches/diags/dev
+    BRANCH_NAME=hdpsm-new-kernel
+    BUILD_TARG=diags-cn5430
+    TFTP_FILENAME=eslm120.bin
+    PATH_TO_TFTP=/var/lib/tftpboot
+    PATH_TO_FTP=/var/ftp/diags
+    PATH_TO_NFS=/flexnfsroot
+    LOCAL_FILENAME=kernel-diagramfs-eslm120-powerpc-e500-ciena_cn54xx_e500_36b.img
+
+    declare -l POSTFIX
+    POSTFIX=$1
+    POSTFIX=${POSTFIX//[=]/}
+
+    echo "Building from Branch $BRANCH_NAME : ESLM-120 Diags"
+    touch $PATH_TO_BRANCH/$BRANCH_NAME/src/software/diags-centaur/apps/diags/common/Version.cpp
+    time $PATH_TO_BRANCH/$BRANCH_NAME/go TARG=$BUILD_TARG -j8 kernel.img_diagramfs_eslm120 $1
+    if (( $? == 0 )); then
+        echo "$1 Diag Build Succeeded!"
+        echo "Moving file to tftpboot"
+        cp $PATH_TO_BRANCH/$BRANCH_NAME/build/$BUILD_TARG/kernel.img/$LOCAL_FILENAME $PATH_TO_TFTP/$TFTP_FILENAME
+        echo "Moving file to ftp"
+        cp $PATH_TO_BRANCH/$BRANCH_NAME/build/$BUILD_TARG/kernel.img/$LOCAL_FILENAME $PATH_TO_FTP/$TFTP_FILENAME
+        echo "Moving file to flexnfsroot"
+        cp $PATH_TO_BRANCH/$BRANCH_NAME/build/$BUILD_TARG/eslm_diags/eslm120/powerpc-e500/32/eslm_diags $PATH_TO_NFS/eslm_diags
+    else
+        echo "ESLM-120 Diag Build Failed!"
+    fi
+}
+
+function ebtags {
+    echo "Remaking Tag File for Current Branch and Packages..."
+    ctags -R -I __UNUSED__ --languages=C,+C++ --C++-kinds=+p --fields=+iaSK --extra=+q --exclude=*build/* --exclude=*cache/* --exclude=*configs/* --exclude=*make/* .
+    echo "Done!"
+}
+function rbtags {
+    echo "Remaking Tag File for Current Branch..."
+    ctags -R -I __UNUSED__ --languages=C,+C++ --C++-kinds=+p --fields=+iaSK --extra=+q --exclude=*build/* --exclude=*cache/* --exclude=*configs/* --exclude=*make/* --exclude=*packages/* .
+    echo "Done!"
+}
+function tagsgeneric {
+    echo "Making Tag File.."
+    ctags -R -I __UNUSED__ --languages=C,+C++ --C++-kinds=+p --fields=+iaSK --extra=+q .
+    echo "Done!"
+}
+
+function regmap_old {
+    /home/cdeloach/sandbox/CienaEngineering/fpga/common/regmap/dev/scripts/gen_regmap.tcl -novh -nosv -notcl -nohtml -nodump -diag_h -enum_h $1
+}
+
+function regmap {
+    /home/cdeloach/sandbox/CienaEngineering/fpga/common/regmap/dev/scripts/gen_regmap.tcl -novh -nosv -notcl -nohtml -nodump -diag_h $1
+}
+
+function rdesk {
+    rdesktop -g 1600x980+1680+0 -u labuser -p Pow!@123 ga-hwlab-$1 &
+}
+
+function rdeskany {
+    rdesktop -g 1600x980+1680+0 -u $1 $2 &
+}
+
+function cptoeric {
+    scp $1 10.1.7.23:/tftpboot/hslm1_cd.bin
+}
+
+psgrep()
+{
+   ps -aux | grep $1 | grep -v grep
+}
+
+function test {
+    declare -l POSTFIX
+    POSTFIX=$3
+    POSTFIX=${POSTFIX//[=]/}
+
+    if [ $2 == "all" ]; then
+        time echo $3
+        if (( $? == 0 )); then
+            echo "All Diags Build Succeeded!"
+            echo "Moving file to tftpboot"
+            if [ $# == 2 ]; then
+                echo "Normal Moving file to ftp"
+            else
+                echo "tslm3_$POSTFIX.bin"
+            fi
+        else
+            echo "All Diags Build Failed!"
+        fi
+    fi
+}
+
+tex_log_parse()
+{
+    grep -A6 "Begin Test\|sResult  : Failed" $1 | grep "| Begin Test:\|| sDetails\|^|      " | sed 's/| Begin Test: \(.*\)/\1/g'
+}
+
+tex_log_summary()
+{
+    grep "End Test :\|Result   :" $1 | awk '{ if ($2 == "Result") printf("%s\t\t%s\n", $4, test_name); else test_name=$5}' | sort -k2 | uniq -c
+}
+
+function edebug {
+    cd /localdata/cdeloach/sandbox/oneos/branches/diags/dev/hdpsm-new-kernel/
+    ./make/tools/dbg.sh gdb diags-cn5430 diagramfs eslm120 192.168.2.$1:65000 ciena/bin/eslm_diags
+}
+

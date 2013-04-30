@@ -1,0 +1,138 @@
+# .bashrc
+
+# Set site if cannot be found
+# export CIENA_SITE=ATLANTA
+
+export EDITOR=gvim
+
+##############################################
+# PS1 Settings
+##############################################
+# Color Codes with tput
+# 0 = Black
+# 1 = Red
+# 2 = Green
+# 3 = Yellow
+# 4 = Blue
+# 5 = Magenta
+# 6 = Cyan
+# 7 = White
+# tput options
+# setab - background color, setaf - foreground color
+# bold - bold, dim - half-bright, smul - underline
+# rmul - end underline, rev - reverse mode,
+# smso - standout mode, rmso - end standout mode
+# sgr0 - turn off all attributes
+export PS1="\
+\[$(tput setaf 6)\][\d \@] \
+\[$(tput smul)\]\
+\[$(tput setaf 1)\]\u@\h\
+\[$(tput rmul)\]:\
+\[$(tput setaf 3)\]\w> \
+\[$(tput sgr0)\]"
+
+
+alias ls='ls --color=auto'
+ulimit -s unlimited
+
+# Aliases
+if [ -f "$HOME/.bash_aliases" ] ; then
+  source $HOME/.bash_aliases
+fi
+
+##############################################
+# Setup Modules
+##############################################
+export SITE=ATLANTA
+export MODULES_ROOT=/corp/proj/fpga/verification/scripts/modules
+modulesSetupFile=$MODULES_ROOT/setup-Atlanta.sh
+if [ -f $modulesSetupFile ]; then
+  . $modulesSetupFile
+    # Load the needed modules
+    #   Tools
+    ## module load Acrobat aliases glade htop meld/v1.4.0 emacs vim synergy Thunderbird UltraVNC
+    ## module load Acrobat aliases htop meld/v1.4.0 vim
+    #   EDA
+    module load altera questa synopsys_fpga xilinx 0in hds
+else
+  echo "WARNING: Something is wrong, modules is not available."
+  echo "         Modules setup file '$modulesSetupFile' does not exists!"
+  echo "WARNING: Modules setup file '$modulesSetupFile' does not exists!" | mailx -s "[setup-Atlanta.sh] failed!" $USER@ciena.com -c akhailta@ciena.com
+fi
+
+##############################################
+# Perforce Environment Variables
+##############################################
+export P4USER=toatts
+export P4CONFIG='.p4config'
+export P4EDITOR=gvim
+export P4PORT=gaxp4proxy2:2004
+export P4PASSWD=Reset321
+export CIENA_FPGA_PATH=~/projects
+
+# Temporary override
+#_MENTOR_LICENSE_FILE='9001@galmgr1a,9001@galmgr1b,9001@galmgr1c:9001@onlmgr1a,9001@onlmgr1b,9001@onlmgr1c:9001@onxlmgr2a,9001@onxlmgr2b,9001@onxlmgr2c'
+#_ALTERA_LICENSE_FILE='9007@onxlmgr2a:9007@onxlmgr2b:9007@onxlmgr2c'
+#_XILINX_LICENSE_FILE='9013@onxlmgr2a:9013@onxlmgr2b:9013@onxlmgr2c'
+#_SYNOPSYS_LICENSE_FILE='9006@mdlmgr1a:9006@mdlmgr1b:9006@mdlmgr1c:9006@onlmgr1a:9006@onlmgr1b:9006@onlmgr1c'
+#export LM_LICENSE_FILE=$_ALTERA_LICENSE_FILE:$_SYNOPSYS_LICENSE_FILE:$_XILINX_LICENSE_FILE
+#export MGLS_LICENSE_FILE=$_MENTOR_LICENSE_FILE
+
+
+if [ -d "$HOME/bin" ] ; then
+  path_append $HOME/bin
+fi
+
+# Ciena TCL
+# export TCL_LIBRARY=$HOME/fpga/common/tcl/tcl-8.4.19.4/lib/tcl8.4
+# export TK_LIBRARY=$HOME/fpga/common/tcl/tcl-8.4.19.4/lib/tk8.4
+# export CIENA_TCL_ENV=$HOME/fpga/common/tcl/dev/env/env_all.tcl
+
+export DOPATH=".;..;./script"
+export MODELSIM_TCL=~/modelsim.tc
+
+path_remove() {
+  local IFS=':'
+  local NEWPATH
+  for DIR in $PATH; do
+     if [ "$DIR" != "$1" ]; then
+       NEWPATH="${NEWPATH:+$NEWPATH:}$DIR"
+     fi
+  done
+  export PATH="${NEWPATH}"
+}
+
+path_append() {
+   path_remove $1
+   export PATH="${PATH}:$1"
+}
+
+path_prepend() {
+   path_remove $1
+   export PATH="$1:${PATH}"
+}
+
+tarview() {
+    if [ -e $1 ]
+    then
+        echo -n "Displaying contents of $1"
+        if [ ${1##*.} = tar ]
+            then
+            echo "(uncompressed tar)"
+            tar tvf $1
+        elif [ ${1##*.} = gz ]
+            then
+            echo "(gzip-compressed tar)"
+            tar tzvf $1
+        elif [ ${1##*.} = bz2 ]
+            then
+            echo "(bzip2-compressed tar)"
+            cat $1 | bzip2 -d | tar tvf -
+        fi
+    else
+        echo "file \"$1\" doesn't exist"
+    fi
+}
+
+
+
