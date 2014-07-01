@@ -1,1 +1,245 @@
-/home/toatts/.bashrc
+# .bashrc
+
+export PATH="${PATH}:/corp/tools/centaur/bin"
+export EDITOR=vim
+
+##############################################
+# PS1 Settings
+##############################################
+# Color Codes with tput
+# 0 = Black
+# 1 = Red
+# 2 = Green
+# 3 = Yellow
+# 4 = Blue
+# 5 = Magenta
+# 6 = Cyan
+# 7 = White
+# tput options
+# setab - background color, setaf - foreground color
+# bold - bold, dim - half-bright, smul - underline
+# rmul - end underline, rev - reverse mode,
+# smso - standout mode, rmso - end standout mode
+# sgr0 - turn off all attributes
+export PS1="\
+\[$(tput setaf 6)\][\d \@] \
+\[$(tput smul)\]\
+\[$(tput setaf 1)\]\u@\h\
+\[$(tput rmul)\]:\
+\[$(tput setaf 3)\]\w> \
+\[$(tput sgr0)\]"
+
+ulimit -s unlimited
+
+# Aliases
+if [ -f "$HOME/.bash_aliases" ] ; then
+  source $HOME/.bash_aliases
+fi
+
+##############################################
+# Setup Modules
+##############################################
+export CIENA_SITE=ATLANTA
+unset MODULES_ROOT
+# MODULES_SETUP=/corp/proj/fpga/verification/scripts/modules/setup.sh
+export MODULES_SETUP=${BOOTSTRAP_WORKSPACE:=/home/fpgargrs/bootstrap}/modules/setup.sh
+if [[ -e $MODULES_SETUP ]]; then
+    source $MODULES_SETUP
+    module load altera questa synopsys_fpga xilinx 0in hds
+else
+  echo "ERROR: Unable to load modules because $MODULES_SETUP is missing!"
+  echo "ERROR: Unable to load modules because $MODULES_SETUP is missing!" | mailx -s "[bashrc] unable to load modules failed!" $USER@ciena.com -c akhailta@ciena.com,jparsons@ciena.com
+fi
+
+##############################################
+# Perforce Environment Variables
+##############################################
+export P4USER=toatts
+export P4CONFIG='.p4config'
+export P4EDITOR=vim
+export P4DIFF=vimdiff
+export P4MERGE="p4merge"
+export P4PORT=gaxp4proxy2:2004
+export CIENA_FPGA_PATH=~/projects
+
+# Temporary override
+#_MENTOR_LICENSE_FILE='9001@galmgr1a,9001@galmgr1b,9001@galmgr1c:9001@onlmgr1a,9001@onlmgr1b,9001@onlmgr1c:9001@onxlmgr2a,9001@onxlmgr2b,9001@onxlmgr2c'
+#_ALTERA_LICENSE_FILE='9007@onxlmgr2a:9007@onxlmgr2b:9007@onxlmgr2c'
+#_XILINX_LICENSE_FILE='9013@onxlmgr2a:9013@onxlmgr2b:9013@onxlmgr2c'
+#_SYNOPSYS_LICENSE_FILE='9006@mdlmgr1a:9006@mdlmgr1b:9006@mdlmgr1c:9006@onlmgr1a:9006@onlmgr1b:9006@onlmgr1c'
+#export LM_LICENSE_FILE=$_ALTERA_LICENSE_FILE:$_SYNOPSYS_LICENSE_FILE:$_XILINX_LICENSE_FILE
+#export MGLS_LICENSE_FILE=$_MENTOR_LICENSE_FILE
+
+
+if [ -d "$HOME/bin" ] ; then
+  path_append $HOME/bin
+fi
+
+# Ciena TCL
+# export TCL_LIBRARY=$HOME/fpga/common/tcl/tcl-8.4.19.4/lib/tcl8.4
+# export TK_LIBRARY=$HOME/fpga/common/tcl/tcl-8.4.19.4/lib/tk8.4
+# export CIENA_TCL_ENV=$HOME/fpga/common/tcl/dev/env/env_all.tcl
+
+export DOPATH=".;..;./script"
+export MODELSIM_TCL=~/modelsim.tc
+
+##############################################
+# Functions                       
+##############################################
+
+function regmap_build() {
+    echo -e "[REGMAP_BUILD] Initializing regmap_build script"
+    pushd .
+    case "$1" in
+        op)
+            echo -e "[REGMAP_BUILD] Building OSLM 5x100 Port FPGA regmap"
+            cd ~/projects/oslm5x100/load1_diag_dev/common/port_top_dev/include
+            make rtl regs
+            cd ../../../include
+            make rtl regs
+            ;;
+        oc)
+            echo -e "[REGMAP_BUILD] Building OSLM 500G Control FPGA regmap"
+            cd ~/projects/oslm5x100_control_fpga_dev/include
+            make rtl regs
+            ;;
+        opc)
+            echo -e "[REGMAP_BUILD] Building OSLM 50x10 Port Control FPGA regmap"
+            cd ~/projects/oslm50x10/port_fpga_dev/include
+            make rtl regs
+            ;;
+        ec)
+            echo -e "[REGMAP_BUILD] Building ESLM Control FPGA regmap"
+            cd ~/projects/eslm/ctrl_fpga_dev/include
+            make rtl regs
+            ;;
+        epc)
+            echo -e "[REGMAP_BUILD] Building ESLM Port Control FPGA regmap"
+            cd ~/projects/eslm/portctrl_fpga_dev/include
+            make rtl regs
+            ;;
+        *)
+            echo -e "[REGMAP_BUILD] Error: input a valid FPGA to build regmap"
+            echo -e "List:"
+            echo -e "op oc opc ec epc"
+    esac
+    popd
+    echo -e "[REGMAP_BUILD] Regmap builds complete"
+}
+
+function ediag {
+    PATH_TO_BRANCH=/localdata/
+    BRANCH_NAME=toatts
+    BUILD_TARG=diags-cn5430
+    TFTP_FILENAME=eslmflex_toatts.bin
+    PATH_TO_TFTP=/tftpboot
+    LOCAL_FILENAME=kernel-diagramfs-eslm120-powerpc-e500-ciena_cn54xx_e500_36b.img
+
+    echo "Building from branch $BRANCH_NAME : ESLM-Flex-100G Diags"
+    if [ ! -z "$1" ]; then
+        TFTP_FILENAME=$1_$TFTP_FILENAME
+        echo "Building test load named $TFTP_FILENAME"
+    fi
+    touch $PATH_TO_BRANCH/$BRANCH_NAME/src/software/diags-centaur/apps/diags/common/Version.cpp
+    time $PATH_TO_BRANCH/$BRANCH_NAME/go TARG=$BUILD_TARG -j8 kernel.img_diagramfs_eslm120
+    if (( $? == 0 )); then
+        echo "ESLM-Flex-100G Diag Build Succeeded!"
+        echo "Moving file to tftpboot"
+        cp $PATH_TO_BRANCH/$BRANCH_NAME/build/$BUILD_TARG/kernel.img/$LOCAL_FILENAME $PATH_TO_TFTP/$TFTP_FILENAME
+        echo "$PATH_TO_TFTP/$TFTP_FILENAME build is ready"
+    else
+        echo "ESLM-Flex-100G Diag Build Failed!"
+    fi
+    echo "[DONE]"
+}
+
+function odiag {
+    PATH_TO_BRANCH=/localdata/
+    BRANCH_NAME=toatts
+    BUILD_TARG=diags-cn5430
+    TFTP_FILENAME=oslm$1_toatts.bin
+    PATH_TO_TFTP=/tftpboot
+#    PATH_TO_FTP=/ftp/diags
+#    PATH_TO_NFS=/flexnfsroot
+    LOCAL_FILENAME=kernel-diagramfs-oslm$1-powerpc-e500-ciena_cn54xx_e500_36b.img
+
+    echo "Building from branch $BRANCH_NAME : OSLM-$1 Diags"
+    if [ ! -z "$2" ]; then
+        TFTP_FILENAME=$2_$TFTP_FILENAME
+        echo "Building test load named $TFTP_FILENAME"
+    fi
+    touch $PATH_TO_BRANCH/$BRANCH_NAME/src/software/diags-centaur/apps/diags/common/Version.cpp
+    time $PATH_TO_BRANCH/$BRANCH_NAME/go TARG=$BUILD_TARG -j8 kernel.img_diagramfs_oslm$1
+    if (( $? == 0 )); then
+        echo "OSLM-$1 Diag Build Succeeded!"
+        echo "Moving file to tftpboot"
+        cp $PATH_TO_BRANCH/$BRANCH_NAME/build/$BUILD_TARG/kernel.img/$LOCAL_FILENAME $PATH_TO_TFTP/$TFTP_FILENAME
+        echo "$PATH_TO_TFTP/$TFTP_FILENAME build is ready"
+#        echo "Moving file to ftp"
+#        cp $PATH_TO_BRANCH/$BRANCH_NAME/build/$BUILD_TARG/kernel.img/$LOCAL_FILENAME $PATH_TO_FTP/$TFTP_FILENAME
+#        echo "Moving file to flexnfsroot"
+#        cp $PATH_TO_BRANCH/$BRANCH_NAME/build/$BUILD_TARG/oslm_diags/oslm$1/powerpc-e500/32/oslm_diags $PATH_TO_NFS/oslm_diags
+    else
+        echo "OSLM-$1 Diag Build Failed!"
+    fi
+    echo "[DONE]"
+}
+
+function tags_make {
+    echo "Making Tag File.."
+    pushd .
+    cd /localdata/toatts/src/software
+    ctags -R -I __UNUSED__ --languages=C,+C++ --C++-kinds=+p --fields=+iaSK --extra=+q .
+    popd 
+    echo "Done!"
+}
+
+function regmap {
+    /localdata/toatts/fpga/common/regmap/dev/scripts/gen_regmap.tcl -novh -nosv -notcl -nohtml -nodump -diag_h $1
+}
+
+path_remove() {
+  local IFS=':'
+  local NEWPATH
+  for DIR in $PATH; do
+     if [ "$DIR" != "$1" ]; then
+       NEWPATH="${NEWPATH:+$NEWPATH:}$DIR"
+     fi
+  done
+  export PATH="${NEWPATH}"
+}
+
+path_append() {
+   path_remove $1
+   export PATH="${PATH}:$1"
+}
+
+path_prepend() {
+   path_remove $1
+   export PATH="$1:${PATH}"
+}
+
+tarview() {
+    if [ -e $1 ]
+    then
+        echo -n "Displaying contents of $1"
+        if [ ${1##*.} = tar ]
+            then
+            echo "(uncompressed tar)"
+            tar tvf $1
+        elif [ ${1##*.} = gz ]
+            then
+            echo "(gzip-compressed tar)"
+            tar tzvf $1
+        elif [ ${1##*.} = bz2 ]
+            then
+            echo "(bzip2-compressed tar)"
+            cat $1 | bzip2 -d | tar tvf -
+        fi
+    else
+        echo "file \"$1\" doesn't exist"
+    fi
+}
+
+
+

@@ -1,1 +1,26 @@
-/home/toatts/.screenrc
+# Skip startup message                 
+startup_message off
+
+# 10000 lines of scrollback
+defscrollback 10000
+
+# An alternative hardstatus to display a bar at the bottom listing the
+hardstatus alwayslastline '%{= kG} [ %{G}%H %{g}][%= %{= kw}%?%-Lw%?%{r}[%{W}%n%f %t%?(%u)%?%{r}]%{w}%?%+Lw%?%?%= %{g}][%{B} %D %m/%d/%y %{W}%C%a %{g}]'
+
+# Execute .bash_profile on startup
+shell -$SHELL
+
+# Detach on hangup
+autodetach on
+
+maptimeout 5
+
+# ------------------------------------------------------------------------------
+# STARTUP SCREENS
+# ------------------------------------------------------------------------------
+
+screen -t BUILD 1 bash
+screen -t EDIT 2 bash
+screen -t PERFORCE 3 bash
+screen -t SEARCH 4 bash
+select 1
